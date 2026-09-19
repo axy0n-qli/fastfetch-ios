@@ -57,12 +57,28 @@ list(FILTER FASTFETCH_SOURCES EXCLUDE REGEX "src/common/impl/.*_windows\\.c$")
 
 add_executable(fastfetch ${FASTFETCH_SOURCES})
 
-find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
-find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
-find_library(IOKIT_FRAMEWORK IOKit REQUIRED)
-find_library(SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration REQUIRED)
-find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
-find_library(UIKIT_FRAMEWORK UIKit REQUIRED)
+if(APPLE)
+    # For iOS cross-compilation on Linux, find_library often fails to find .tbd frameworks.
+    # We provide a fallback to manual paths if IOS_SDK_PATH is defined.
+    if(DEFINED ENV{IOS_SDK_PATH})
+        set(IOS_SDK $ENV{IOS_SDK_PATH})
+        set(FOUNDATION_FRAMEWORK "${IOS_SDK}/System/Library/Frameworks/Foundation.framework/Foundation.tbd")
+        set(COREFOUNDATION_FRAMEWORK "${IOS_SDK}/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation.tbd")
+        set(IOKIT_FRAMEWORK "${IOS_SDK}/System/Library/Frameworks/IOKit.framework/IOKit.tbd")
+        set(SYSTEMCONFIGURATION_FRAMEWORK "${IOS_SDK}/System/Library/Frameworks/SystemConfiguration.framework/SystemConfiguration.tbd")
+        set(COREGRAPHICS_FRAMEWORK "${IOS_SDK}/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics.tbd")
+        set(UIKIT_FRAMEWORK "${IOS_SDK}/System/Library/Frameworks/UIKit.framework/UIKit.tbd")
+    else()
+        find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+        find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+        find_library(IOKIT_FRAMEWORK IOKit REQUIRED)
+        find_library(SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration REQUIRED)
+        find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
+        find_library(UIKIT_FRAMEWORK UIKit REQUIRED)
+    endif()
+else()
+    # Non-Apple targets (if any)
+endif()
 
 target_link_libraries(fastfetch
     PRIVATE
